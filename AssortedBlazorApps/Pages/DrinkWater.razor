@@ -1,6 +1,7 @@
 ﻿@page "/drinkwater"
-@using System.Timers;
+@using System.Timers
 @implements IDisposable
+@inject IJSRuntime JsRuntime
 
 <h2>Drink Water Timer</h2>
 
@@ -41,6 +42,8 @@
 	
 }
 
+<audio id="alarm" src="/Sound/notify.wav"/>
+
 
 @code {
 	[Parameter] public int hours { get; set; }
@@ -79,6 +82,7 @@
 		if(timeRemaining <= 0)
 		{
 			StopTimer();
+			await JsRuntime.InvokeVoidAsync("alert", "Drink!");
 			await InvokeAsync(StateHasChanged);
 		}
 	}
