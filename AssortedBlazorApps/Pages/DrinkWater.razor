@@ -1,0 +1,109 @@
+﻿@page "/drinkwater"
+@using System.Timers;
+@implements IDisposable
+
+<h2>Drink Water Timer</h2>
+
+@if (!timeSet)
+{
+	<h3>Set the timer to remind you to drink water.</h3>
+	<div class="set-timer-container">
+		<div class="set-timer-text">
+			<p>Set the timer here:</p>
+		</div>
+		<div class="input-container">
+			<div class="input-inputs">
+				<span>Hours</span>
+				<input type="number" @bind='@hours'/>
+			</div>
+			<div class="input-inputs">
+				<span>Minutes</span>
+				<input type="number" @bind='@minutes'/>
+			</div>
+			<div class="input-inputs">
+				<span>Seconds</span>
+				<input type="number" @bind='@seconds'/>
+			</div>
+		</div>
+	</div>
+	<button type="button" @onclick='CalculateTime'>Set Time</button>
+}
+
+
+@if (timeSet)
+{
+	<h2>@time</h2>
+	<div class="timer-button-container">
+		<button type="button" @onclick='StartTimer'>Start</button>
+		<button type="button" @onclick='PauseTimer'>Pause</button>
+		<button type="button" @onclick='StopTimer'>Stop</button>
+	</div>
+	
+}
+
+
+@code {
+	[Parameter] public int hours { get; set; }
+	[Parameter] public int minutes { get; set; }
+	[Parameter] public int seconds { get; set; }
+	private int timeRemaining;
+	private System.Timers.Timer drinkTimer = null!;
+	private TimeSpan time = new TimeSpan();
+	private bool timeSet = false;
+	private bool timerStarted = false;
+
+	protected override void OnInitialized()
+	{
+		drinkTimer = new System.Timers.Timer(1000);
+		drinkTimer.Elapsed += TimerElapsed;
+	}
+
+	private void CalculateTime()
+	{
+		timeRemaining = (hours * 3600) + (minutes * 60) + seconds;
+		time = TimeSpan.FromSeconds(timeRemaining);
+		timeSet = true;
+	}
+
+	private void StartTimer()
+	{
+		drinkTimer.Start();
+		timerStarted = true;
+
+	}
+
+	private async void TimerElapsed(object? source, ElapsedEventArgs e)
+	{
+		timeRemaining--;
+		await InvokeAsync(() =>{ time = TimeSpan.FromSeconds(timeRemaining); StateHasChanged(); });
+		if(timeRemaining <= 0)
+		{
+			StopTimer();
+			await InvokeAsync(StateHasChanged);
+		}
+	}
+
+	private void StopTimer()
+	{
+		drinkTimer.Stop();
+		timerStarted = false;
+		timeSet = false;
+	}
+
+	private void PauseTimer()
+	{
+		if (drinkTimer.Enabled)
+		{
+			drinkTimer.Stop();
+		}
+		else if (timerStarted)
+		{
+			drinkTimer.Start();
+		}	
+	}
+
+	public void Dispose()
+	{
+		drinkTimer.Dispose();
+	}
+}
